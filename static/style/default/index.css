@@ -1,0 +1,34 @@
+#text {
+    color: var(--color-normal-contrast-weakest);
+    margin: auto;
+    width: 180px;
+}
+.counter {
+    text-align: center;
+}
+.ui-prop {
+   margin-top: 5px;
+}
+
+.ui-prop > ui-label {
+    margin-left: 20px;
+}
+
+.ok-button {
+    margin-top: 5px;
+    width: 80%;
+}
+
+.ok-progress {
+    margin-top: 5px;
+    width: 80%;
+}
+
+.ok-label {
+    margin-top: 5px;
+    width: 80%;
+}
+
+.ui-checkbox {
+    left: 50%;
+}
