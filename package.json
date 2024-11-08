@@ -6,7 +6,6 @@
     "author": "v",
     "editor": ">=3.8.3",
     "scripts": {
-        "preinstall": "node ./scripts/preinstall.js",
         "build": "npx tsc"
     },
     "description": "i18n:game-configure.description",
@@ -32,9 +31,9 @@
             "main": "dist/panels/default",
             "size": {
                 "min-width": 400,
-                "min-height": 250,
+                "min-height": 460,
                 "width": 400,
-                "height": 250
+                "height": 460
             }
         }
     },

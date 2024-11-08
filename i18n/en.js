@@ -1,7 +1,7 @@
 "use strict";
 module.exports = {
     panel_title: "Configuration Parser",
-    game_framework: "ksgames26",
+    game_framework: "ksgames26/configure",
     configure_parser:"Configuration Parser",
     xlsx_path:"Xlsx Path",
     export_director:"Export Director (Bin)",

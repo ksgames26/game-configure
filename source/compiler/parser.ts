@@ -385,11 +385,21 @@ const chr = function (codePt: number) {
     return String.fromCharCode(codePt);
 };
 
+
+const containsChinese = function (str: string) {
+    return /[\u4e00-\u9fff]/.test(str);
+}
+
 const stox = function stox(wb: xlsx.WorkBook, f: string): Map<string, PQWorkBook> | null {
     let out = new Map<string, PQWorkBook>();
     for (let name in wb.Sheets) {
         // sheet 名称
         const o = { name: name, rows: {}, merges: [], types: [] } as any;
+
+        if (containsChinese(name)) {
+            console.log(`中文sheet ${name} 不解析`);
+            continue;
+        }
 
         // merges: [
         //  'A1:F11',
@@ -430,7 +440,7 @@ const stox = function stox(wb: xlsx.WorkBook, f: string): Map<string, PQWorkBook
             let cells = {} as any;
             for (let j = 1, len = max_row_value; j <= len; j++) {
                 let key = numToChar(j) + i;
-                const cell = value[key];
+                const cell = value[key] as xlsx.CellObject;
 
                 // 关键描述
                 // v 原始值（详见数据类型部分）
@@ -1522,8 +1532,18 @@ class ReadExcel {
     }
 
     public getTypeValue(t: PQInput, re: ReadExcel): void {
-        const error = `配置表${re.interfaceName}解析失败` + t.source.indx + "_" + t.source.name + "_" + t.source.indx;
+        const error = `配置表${re.interfaceName}解析失败` + "字段:" + t.source.name + "[行:" + t.source.indx + "," + "列:" + t.idx + "]";
 
+        try {
+            this.parseValue(error, t, re);
+        } catch (e) {
+            // 不能继续解析了
+            // 直接中断程序
+            throw error;
+        }
+    }
+
+    private parseValue(error: string, t: PQInput, re: ReadExcel): void {
         const isArray = t.source.type.endsWith("[]");
         let ty = t.source.type as ProtoBufScalarType;
         if (isArray) {
@@ -1567,10 +1587,16 @@ class ReadExcel {
                     }
 
                     t.data[t.source.name] = (list as string).split(";").map(v => +v);
+                    if (Array.isArray(t.data[t.source.name])) {
+                        for (let i = 0; i < t.data[t.source.name].length; i++) {
+                            assert(isNaN(t.data[t.source.name][i]), error);
+                        }
+                    }
                 } else {
                     t.data[t.source.name] = +list;
+                    assert(t.data[t.source.name] == void 0 || isNaN(t.data[t.source.name]), error);
                 }
-                (t.data[t.source.name] == void 0, error);
+                assert(t.data[t.source.name] == void 0, error);
                 break;
             }
             case "bool":

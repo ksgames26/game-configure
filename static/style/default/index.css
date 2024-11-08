@@ -1,34 +1,51 @@
 #text {
-    color: var(--color-normal-contrast-weakest);
-    margin: auto;
-    width: 180px;
+  color: var(--color-normal-contrast-weakest);
+  margin: auto;
+  width: 180px;
 }
 .counter {
-    text-align: center;
+  text-align: center;
 }
 .ui-prop {
-   margin-top: 5px;
+  margin-top: 5px;
 }
 
 .ui-prop > ui-label {
-    margin-left: 20px;
+  margin-left: 20px;
 }
 
 .ok-button {
-    margin-top: 5px;
-    width: 80%;
+  margin-top: 5px;
+  width: 80%;
 }
 
 .ok-progress {
-    margin-top: 5px;
-    width: 80%;
+  margin-top: 5px;
+  width: 80%;
 }
 
 .ok-label {
-    margin-top: 5px;
-    width: 80%;
+  margin-top: 5px;
+  width: 80%;
 }
 
 .ui-checkbox {
-    left: 50%;
+  left: 50%;
+}
+
+.list-container {
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+.list-item {
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.scrollable {
+  height: 200px;
 }

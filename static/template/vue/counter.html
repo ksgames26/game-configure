@@ -94,10 +94,16 @@
 
   <ui-progress class="ok-progress" :value="count" percent></ui-progress>
 
-  <ui-prop class="ui-prop" v-for="post in posts" :key="post.id">
-    <ui-label slot="label" :value="post.id"></ui-label>
-    <ui-checkbox slot="content" class="ui-checkbox" readonly :value="post.value"
-      >{{post.id}}</ui-checkbox
-    >
-  </ui-prop>
+  <div :class="['list-container', { 'scrollable': posts.length > 3 }]">
+    <ui-prop class="ui-prop" v-for="post in posts" :key="post.id">
+      <ui-label slot="label" :value="post.id"></ui-label>
+      <ui-checkbox
+        slot="content"
+        class="ui-checkbox"
+        readonly
+        :value="post.value"
+        >{{post.id}}</ui-checkbox
+      >
+    </ui-prop>
+  </div>
 </div>
