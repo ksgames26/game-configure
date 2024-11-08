@@ -1,12 +1,27 @@
+import { execSync } from 'child_process';
 import packageJSON from '../package.json';
+
 /**
  * @en Registration method for the main process of Extension
  * @zh 为扩展的主进程的注册方法
  */
 export const methods: { [key: string]: (...any: any) => any } = {
 
-    configureParser() { 
+    configureParser() {
         Editor.Panel.open(packageJSON.name);
+    },
+
+    compierProtobuf(command: string) {
+
+        try {
+            execSync(command, { cwd: __dirname });
+        } catch (error) {
+
+            console.log("执行失败: " + error);
+            return "error";
+        }
+
+        return "success"
     }
 };
 

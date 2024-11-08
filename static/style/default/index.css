@@ -49,3 +49,55 @@
 .scrollable {
   height: 200px;
 }
+
+.button-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;  
+  margin-top: 20px;        
+}
+
+.warning-icon {
+  color: #f0a500;
+  cursor: help;
+  font-size: 14px;
+}
+
+.build-log {
+  margin-top: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.log-list {
+  height: 200px;  /* 固定高度 */
+  overflow-y: auto;  /* 超出时显示滚动条 */
+  font-family: monospace;  /* 等宽字体 */
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.log-item {
+  padding: 2px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* 自定义滚动条样式（可选） */
+.log-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.log-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.log-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

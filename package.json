@@ -13,11 +13,13 @@
     "dependencies": {
         "@protobuf-ts/runtime": "^2.9.4",
         "chalk": "^5.3.0",
+        "crc-32": "^1.2.2",
         "fs-extra": "^10.0.0",
         "vue": "^3.1.4"
     },
     "devDependencies": {
         "@cocos/creator-types": "^3.8.3",
+        "@protobuf-ts/plugin": "^2.9.4",
         "@types/fs-extra": "^9.0.5",
         "@types/node": "^18.17.1",
         "ts-morph": "^22.0.0",
@@ -30,10 +32,10 @@
             "type": "dockable",
             "main": "dist/panels/default",
             "size": {
-                "min-width": 400,
-                "min-height": 460,
-                "width": 400,
-                "height": 460
+                "min-width": 658,
+                "min-height": 479,
+                "width": 658,
+                "height": 479
             }
         }
     },
@@ -49,6 +51,11 @@
             "configure-parser": {
                 "methods": [
                     "configureParser"
+                ]
+            },
+            "compier-protobuf": {
+                "methods": [
+                    "compierProtobuf"
                 ]
             }
         },

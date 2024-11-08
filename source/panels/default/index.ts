@@ -1,18 +1,120 @@
-import { existsSync, writeFileSync } from 'fs';
-import { readFileSync } from 'fs-extra';
-import { join } from 'path';
+import * as crc32 from 'crc-32';
+import { existsSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'fs';
+import { emptyDirSync, mkdirSync, readFileSync, rmdirSync } from 'fs-extra';
+import { isAbsolute, join, normalize } from 'path';
+import { GetAccessorDeclarationStructure, Project, Scope, StructureKind, SyntaxKind } from "ts-morph";
 import { App, createApp } from 'vue';
 import packageJSON from '../../../package.json';
 import { Parser, ParserOptions } from '../../compiler/parser';
+
+function countExports(filePath: string) {
+    // 创建项目
+    const project = new Project();
+
+    // 添加源文件
+    const sourceFile = project.addSourceFileAtPath(filePath);
+
+    // 获取所有导出声明
+    const exports = {
+        // 获取 export 声明
+        exportDeclarations: sourceFile.getExportDeclarations(),
+        // 获取 export default 声明
+        defaultExports: sourceFile.getDefaultExportSymbol() ? 1 : 0,
+        // 获取带有 export 关键字的变量声明
+        exportVariables: sourceFile.getVariableDeclarations().filter(d =>
+            d.hasExportKeyword()
+        ),
+        // 获取带有 export 关键字的函数声明
+        exportFunctions: sourceFile.getFunctions().filter(f =>
+            f.hasExportKeyword()
+        ),
+        // 获取带有 export 关键字的类声明
+        exportClasses: sourceFile.getClasses().filter(c =>
+            c.hasExportKeyword()
+        ),
+        // 获取带有 export 关键字的接口声明
+        exportInterfaces: sourceFile.getInterfaces().filter(i =>
+            i.hasExportKeyword()
+        )
+    };
+
+    // // 打印结果
+    // console.log(`文件 ${filePath} 中的导出统计：`);
+    // console.log(`- export 声明数量: ${exports.exportDeclarations.length}`);
+    // console.log(`- export default 数量: ${exports.defaultExports}`);
+    // console.log(`- 导出变量数量: ${exports.exportVariables.length}`);
+    // console.log(`- 导出函数数量: ${exports.exportFunctions.length}`);
+    // console.log(`- 导出类数量: ${exports.exportClasses.length}`);
+    // console.log(`- 导出接口数量: ${exports.exportInterfaces.length}`);
+
+    // // 获取具体的导出名称
+    // const exportNames = sourceFile.getExportSymbols().map(symbol => symbol.getName());
+    // console.log('导出的具体名称:', exportNames);
+
+    return exports;
+}
+
+function removeFilesInDirectory(dirPath: string): void {
+    try {
+        const items = readdirSync(dirPath);
+
+        for (const item of items) {
+            const fullPath = join(dirPath, item);
+            const stats = statSync(fullPath);
+
+            // 如果是文件就删除，是目录就跳过
+            if (stats.isFile()) {
+                unlinkSync(fullPath);
+            }
+        }
+    } catch (error) {
+        console.error('删除文件失败:', error);
+        throw error; // 或者根据需要处理错误
+    }
+}
+
+function isValidPath(path: string): boolean {
+    try {
+        // 规范化路径
+        const normalizedPath = normalize(path);
+
+        // 基本路径格式检查
+        const pathRegex = /^(?:[a-zA-Z]:\\|\/)[^<>:"|?*]+$/;
+
+        // 检查是否为绝对路径
+        const isAbsolutePath = isAbsolute(normalizedPath);
+
+        // 返回综合检查结果
+        return pathRegex.test(normalizedPath) && isAbsolutePath;
+    } catch (e) {
+        return false;
+    }
+}
+
+function hasSubDirectories(dirPath: string): boolean {
+    try {
+        const items = readdirSync(dirPath);
+        return items.some(item => {
+            const fullPath = join(dirPath, item);
+            return statSync(fullPath).isDirectory();
+        });
+    } catch (error) {
+        console.error('检查目录失败:', error);
+        return false;
+    }
+}
 
 let path = Editor.Package.getPath(packageJSON.name)!;
 let file = join(path, "config.json");
 if (!existsSync(file)) {
     writeFileSync(file, JSON.stringify({
         xlsxPath: "",
+        protobufPath: "",
         exportDirector: "",
         exportTSDirector: "",
         modFile: "",
+        protobufRegisterPath: "",
+        protobufRegisterFile: "",
         globalModuleName: "IGameFramework", // 默认的模块名
         globalModuleTSName: "ksgames26", // 默认的文件名称
         globalModuleInterfaceName: "ITableConf" // 默认的接口名
@@ -26,7 +128,10 @@ const save = function (
     modFile: string,
     globalModuleName: string,
     globalModuleTSName: string,
-    globalModuleInterfaceName: string
+    globalModuleInterfaceName: string,
+    protobufPath: string,
+    protobufRegisterPath: string,
+    protobufRegisterFile: string
 ) {
     writeFileSync(file, JSON.stringify({
         xlsxPath: xlsxPath,
@@ -36,6 +141,9 @@ const save = function (
         globalModuleName: globalModuleName,
         globalModuleTSName: globalModuleTSName,
         globalModuleInterfaceName: globalModuleInterfaceName,
+        protobufPath: protobufPath,
+        protobufRegisterPath: protobufRegisterPath,
+        protobufRegisterFile: protobufRegisterFile
     }));
 }
 
@@ -67,18 +175,26 @@ module.exports = Editor.Panel.define({
                 data() {
                     var data = JSON.parse(readFileSync(file, { encoding: "utf-8" }));
                     return {
+                        activeTab: 'tab1',
                         xlsxPath: data.xlsxPath,
                         exportDirector: data.exportDirector,
                         exportTSDirector: data.exportTSDirector,
                         modFile: data.modFile,
+                        protobufRegisterPath: data.protobufRegisterPath,
+                        protobufRegisterFile: data.protobufRegisterFile,
+                        protobufPath: data.protobufPath,
                         globalModuleName: data.globalModuleName,
                         globalModuleTSName: data.globalModuleTSName,
                         globalModuleInterfaceName: data.globalModuleInterfaceName,
                         count: 0,
-                        posts: []
+                        posts: [],
+                        buildLogs: [],  // 用于存储构建日志
                     };
                 },
                 methods: {
+                    switchTab(tabName: string) {
+                        this.activeTab = tabName;
+                    },
                     onSetXlsxPath(director: string) {
                         this.xlsxPath = director;
                         this.save();
@@ -108,7 +224,19 @@ module.exports = Editor.Panel.define({
                         this.save();
                     },
                     save() {
-                        save(this.xlsxPath, this.exportDirector, this.exportTSDirector, this.modFile, this.globalModuleName, this.globalModuleTSName, this.globalModuleInterfaceName);
+                        save(this.xlsxPath, this.exportDirector, this.exportTSDirector, this.modFile, this.globalModuleName, this.globalModuleTSName, this.globalModuleInterfaceName, this.protobufPath, this.protobufRegisterPath, this.protobufRegisterFile);
+                    },
+                    onSetProtobufPath(file: string) {
+                        this.protobufPath = file;
+                        this.save();
+                    },
+                    onSetProtobufRegisterPath(path: string) {
+                        this.protobufRegisterPath = path;
+                        this.save();
+                    },
+                    onSetProtobufRegisterFile(file: string) {
+                        this.protobufRegisterFile = file;
+                        this.save();
                     },
                     async onParser() {
                         this.posts.length = 0;
@@ -145,8 +273,180 @@ module.exports = Editor.Panel.define({
                         } else {
                             await Editor.Dialog.info("配置文件不能为空");
                         }
+                    },
+                    // 添加日志的方法
+                    addBuildLog(message: string) {
+                        this.buildLogs.push(message);
+                        // 自动滚动到底部
+                        this.$nextTick(() => {
+                            const logList = document.querySelector('.log-list');
+                            if (logList) {
+                                logList.scrollTop = logList.scrollHeight;
+                            }
+                        });
+                    },
+                    async onBuildProtobuf() {
+                        if (this.protobufRegisterFile && this.protobufRegisterPath && this.protobufPath) {
+                            if (isValidPath(this.protobufRegisterFile)) {
+                                await Editor.Dialog.info("注册文件不是路径，而是文件名");
+                                return;
+                            }
+
+                            const rPath = this.protobufRegisterPath.replace("project:/", Editor.Project.path);
+
+                            if (!existsSync(rPath)) {
+                                this.addBuildLog(`${rPath} 不存在，创建目录...`);
+                                emptyDirSync(rPath);
+                            } else {
+                                if (hasSubDirectories(rPath)) {
+                                    this.addBuildLog('输出目录有子目录, 仅仅清空根目录而不删除子目录...');
+
+                                    const items = readdirSync(rPath);
+                                    for (const item of items) {
+                                        const fullPath = join(rPath, item);
+                                        const stats = statSync(fullPath);
+
+                                        if (stats.isFile()) {
+                                            const p = rPath.replace(Editor.Project.path, "db:/");
+                                            const uuid = await Editor.Message.request("asset-db", "query-uuid", p);
+                                            if (uuid) {
+                                                await Editor.Message.request("asset-db", "delete-asset", uuid);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    this.addBuildLog('输出目录没有子目录，通过删除文件夹再创建文件夹的方式清空目录...');
+
+                                    const p = rPath.replace(Editor.Project.path, "db:/");
+
+                                    const uuid = await Editor.Message.request("asset-db", "query-uuid", p);
+                                    if (uuid) {
+                                        await Editor.Message.request("asset-db", "delete-asset", uuid);
+                                    }
+
+                                    await new Promise(resolve => { setTimeout(resolve, 2000) });
+                                }
+                            }
+
+                            // 上面会删掉rPath目录
+                            if (!existsSync(rPath)) {
+                                this.addBuildLog(`${rPath} 不存在，创建目录...`);
+                                emptyDirSync(rPath);
+                            }
+
+                            this.buildLogs = [];  // 清空之前的日志
+                            this.addBuildLog('开始编译协议...');
+
+                            this.addBuildLog('创建一个临时目录用来编译协议的输出路径...');
+                            let protobufOutTemp = join(path, ".protobufOutTemp");
+                            if (!existsSync(protobufOutTemp)) {
+                                mkdirSync(protobufOutTemp);
+                            }
+
+                            this.addBuildLog('编译协议到临时目录...');
+                            try {
+                                const isOk = await Editor.Message.request("game-configure", 'compier-protobuf', `npx protoc --ts_out ${protobufOutTemp} --proto_path ${this.protobufPath} ${this.protobufPath}/*.proto --experimental_allow_proto3_optional`);
+                                if (isOk == "success") {
+                                    this.addBuildLog('编译协议完成...');
+                                }
+                            } catch (error: any) {
+                                this.addBuildLog(`编译协议出错,${error.toString()}`);
+                                console.error(error);
+                            }
+
+                            let content = ``;
+
+                            const files = readdirSync(protobufOutTemp);
+                            if (files.length > 0) {
+                                files.forEach(file => {
+                                    let text = readFileSync(`${protobufOutTemp}/${file}`, "utf-8");
+                                    text = text.replace(new RegExp("@protobuf-ts/runtime", "gm"), "db://game-protobuf/game-framework");
+                                    this.addBuildLog(`修改${file}协议导入信息并拷贝到${this.protobufRegisterPath}...`);
+                                    writeFileSync(`${rPath}/${file}`, text);
+
+                                    // 创建项目
+                                    const project = new Project();
+                                    // 添加源文件
+                                    const sourceFile = project.addSourceFileAtPath(`${rPath}/${file}`);
+                                    // 在添加,再添加容器
+                                    sourceFile.addImportDeclarations([
+                                        {
+                                            isTypeOnly: false,
+                                            namedImports: ["Container"],
+                                            moduleSpecifier: "db://game-core/game-framework",
+                                        },
+                                    ]);
+                                    // 添加cc导入
+                                    sourceFile.addImportDeclarations([
+                                        {
+                                            isTypeOnly: false,
+                                            namedImports: ["director"],
+                                            moduleSpecifier: "cc",
+                                        },
+                                    ]);
+                                    const w = project.createWriter();
+
+                                    w.write(`director.on("game-framework-initialize", () => {`);
+
+                                    // 获取所有导出的声明
+                                    const exportedDeclarations = sourceFile.getExportedDeclarations();
+                                    // 遍历所有导出
+                                    exportedDeclarations.forEach((declarations, name) => {
+                                        declarations.forEach(declaration => {
+
+                                            // 检查声明类型
+                                            if (declaration.getKind() === SyntaxKind.VariableDeclaration) {
+                                                const varDecl = declaration.asKind(SyntaxKind.VariableDeclaration);
+                                                const initializer = varDecl?.getInitializer();
+
+                                                if (initializer?.getKind() === SyntaxKind.NewExpression) {
+                                                    w.write(`Container.getInterface("IGameFramework.ISerializable")?.registerInst(${name});`);
+                                                    w.newLine();
+                                                    // 获取类声明
+                                                    const classDeclaration = sourceFile.getClass(name + "$Type")!;
+                                                    // 计算 CRC32 值
+                                                    const crcValue = crc32.str(name); // 使用类名计算 CRC32
+                                                    // 方法1：直接添加 implements 子句
+                                                    classDeclaration.addImplements(`IGameFramework.ISerializer`);
+                                                    const getterStructure: GetAccessorDeclarationStructure = {
+                                                        name: "protoId",
+                                                        kind: StructureKind.GetAccessor,
+                                                        returnType: "number",
+                                                        statements: `return ${crcValue};`,
+                                                        isStatic: false,        // 是否是静态方法
+                                                        scope: Scope.Public         // 访问范围
+                                                    };
+                                                    classDeclaration.addGetAccessor(getterStructure);
+                                                }
+
+                                            }
+                                        });
+                                    });
+
+                                    sourceFile.getClasses().forEach(e => { e.getName() })
+
+
+                                    w.write(`});`);
+                                    sourceFile.insertText(sourceFile.getEnd(), w.toString());
+                                    sourceFile.formatText();
+
+                                    writeFileSync(`${rPath}/${file}`, sourceFile.getFullText());
+                                });
+                            }
+
+                            this.addBuildLog('构建协议注入信息文件...');
+                            const file = `${this.protobufRegisterPath}/${this.protobufRegisterFile}`;
+
+                            this.addBuildLog('删除临时目录...');
+                            rmdirSync(protobufOutTemp, { recursive: true });
+
+                            this.addBuildLog('构建完毕，刷新资源数据库...');
+                            await Editor.Message.request("asset-db", "refresh-asset", "db://assets");
+                        } else {
+                            await Editor.Dialog.info("配置不能为空");
+                        }
                     }
-                },
+                }
             });
             app.mount(this.$.app);
             panelDataMap.set(this, app);

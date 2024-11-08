@@ -1,109 +1,175 @@
 <div class="counter">
-  <ui-prop class="ui-prop">
-    <ui-label slot="label" value="i18n:game-configure.xlsx_path"></ui-label>
-    <ui-file
-      slot="content"
-      type="directory"
-      protocols="project"
-      :value="xlsxPath"
-      @confirm="onSetXlsxPath($event.target.value)"
-    ></ui-file>
-  </ui-prop>
+  <ui-tab>
+    <ui-button
+      :class="{ active: activeTab === 'tab1' }"
+      @click="switchTab('tab1')"
+      >配置</ui-button
+    >
+    <ui-button
+      :class="{ active: activeTab === 'tab2' }"
+      @click="switchTab('tab2')"
+      >协议</ui-button
+    >
+  </ui-tab>
 
-  <ui-prop class="ui-prop">
-    <ui-label
-      slot="label"
-      value="i18n:game-configure.export_director"
-    ></ui-label>
-    <ui-file
-      slot="content"
-      type="directory"
-      protocols="project"
-      :value="exportDirector"
-      @confirm="onSetExportDirector($event.target.value)"
-    ></ui-file>
-  </ui-prop>
+  <div class="tab-content">
+    <div class="configure" v-if="activeTab === 'tab1'">
+      <ui-prop class="ui-prop">
+        <ui-label slot="label" value="i18n:game-configure.xlsx_path"></ui-label>
+        <ui-file
+          slot="content"
+          type="directory"
+          protocols="project"
+          :value="xlsxPath"
+          @confirm="onSetXlsxPath($event.target.value)"
+        ></ui-file>
+      </ui-prop>
 
-  <ui-prop class="ui-prop">
-    <ui-label
-      slot="label"
-      value="i18n:game-configure.export_ts_director"
-    ></ui-label>
-    <ui-file
-      slot="content"
-      type="directory"
-      protocols="project"
-      :value="exportTSDirector"
-      @confirm="onSetExportTSDirector($event.target.value)"
-    ></ui-file>
-  </ui-prop>
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.export_director"
+        ></ui-label>
+        <ui-file
+          slot="content"
+          type="directory"
+          protocols="project"
+          :value="exportDirector"
+          @confirm="onSetExportDirector($event.target.value)"
+        ></ui-file>
+      </ui-prop>
 
-  <ui-prop class="ui-prop">
-    <ui-label
-      slot="label"
-      value="i18n:game-configure.export_gloabl_module_name"
-    ></ui-label>
-    <ui-input
-      slot="content"
-      :value="globalModuleName"
-      @confirm="onSetGlobalModuleName($event.target.value)"
-    ></ui-input>
-  </ui-prop>
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.export_ts_director"
+        ></ui-label>
+        <ui-file
+          slot="content"
+          type="directory"
+          protocols="project"
+          :value="exportTSDirector"
+          @confirm="onSetExportTSDirector($event.target.value)"
+        ></ui-file>
+      </ui-prop>
 
-  <ui-prop class="ui-prop">
-    <ui-label
-      slot="label"
-      value="i18n:game-configure.export_gloabl_module_ts_name"
-    ></ui-label>
-    <ui-input
-      slot="content"
-      :value="globalModuleTSName"
-      @confirm="onSetGlobalModuleTSName($event.target.value)"
-    ></ui-input>
-  </ui-prop>
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.export_gloabl_module_name"
+        ></ui-label>
+        <ui-input
+          slot="content"
+          :value="globalModuleName"
+          @confirm="onSetGlobalModuleName($event.target.value)"
+        ></ui-input>
+      </ui-prop>
 
-  <ui-prop class="ui-prop">
-    <ui-label
-      slot="label"
-      value="i18n:game-configure.export_gloabl_module_interface_name"
-    ></ui-label>
-    <ui-input
-      slot="content"
-      :value="globalModuleInterfaceName"
-      @confirm="onSetGlobalModuleInterfaceName($event.target.value)"
-    ></ui-input>
-  </ui-prop>
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.export_gloabl_module_ts_name"
+        ></ui-label>
+        <ui-input
+          slot="content"
+          :value="globalModuleTSName"
+          @confirm="onSetGlobalModuleTSName($event.target.value)"
+        ></ui-input>
+      </ui-prop>
 
-  <ui-prop class="ui-prop">
-    <ui-label
-      slot="label"
-      value="i18n:game-configure.export_ts_file"
-    ></ui-label>
-    <ui-input
-      slot="content"
-      readonly
-      value="client"
-      :value="modFile"
-      @confirm="onSetModFile($event.target.value)"
-    ></ui-input>
-  </ui-prop>
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.export_gloabl_module_interface_name"
+        ></ui-label>
+        <ui-input
+          slot="content"
+          :value="globalModuleInterfaceName"
+          @confirm="onSetGlobalModuleInterfaceName($event.target.value)"
+        ></ui-input>
+      </ui-prop>
 
-  <ui-button class="ok-button" type="primary" @confirm="onParser"
-    >开始打包</ui-button
-  >
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.export_ts_file"
+        ></ui-label>
+        <ui-input
+          slot="content"
+          readonly
+          value="client"
+          :value="modFile"
+          @confirm="onSetModFile($event.target.value)"
+        ></ui-input>
+      </ui-prop>
 
-  <ui-progress class="ok-progress" :value="count" percent></ui-progress>
-
-  <div :class="['list-container', { 'scrollable': posts.length > 3 }]">
-    <ui-prop class="ui-prop" v-for="post in posts" :key="post.id">
-      <ui-label slot="label" :value="post.id"></ui-label>
-      <ui-checkbox
-        slot="content"
-        class="ui-checkbox"
-        readonly
-        :value="post.value"
-        >{{post.id}}</ui-checkbox
+      <ui-button class="ok-button" type="primary" @confirm="onParser"
+        >开始打包</ui-button
       >
-    </ui-prop>
+
+      <ui-progress class="ok-progress" :value="count" percent></ui-progress>
+
+      <div :class="['list-container', { 'scrollable': posts.length > 3 }]">
+        <ui-prop class="ui-prop" v-for="post in posts" :key="post.id">
+          <ui-label slot="label" :value="post.id"></ui-label>
+          <ui-checkbox
+            slot="content"
+            class="ui-checkbox"
+            readonly
+            :value="post.value"
+            >{{post.id}}</ui-checkbox
+          >
+        </ui-prop>
+      </div>
+    </div>
+
+    <div class="protocol" v-if="activeTab === 'tab2'">
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.protobuf_path"
+        ></ui-label>
+        <ui-file
+          slot="content"
+          type="directory"
+          :value="protobufPath"
+          @confirm="onSetProtobufPath($event.target.value)"
+        ></ui-file>
+      </ui-prop>
+
+      <ui-prop class="ui-prop">
+        <ui-label
+          slot="label"
+          value="i18n:game-configure.protobuf_register_path"
+        ></ui-label>
+        <ui-file
+          slot="content"
+          type="directory"
+          protocols="project"
+          :value="protobufRegisterPath"
+          @confirm="onSetProtobufRegisterPath($event.target.value)"
+        ></ui-file>
+      </ui-prop>
+
+      <div class="button-wrapper">
+        <ui-button class="ok-button" type="primary" @confirm="onBuildProtobuf"
+          >编译协议</ui-button
+        >
+        <span
+          class="warning-icon"
+          title="警告：编译协议将会清空路径，请谨慎操作！"
+          >⚠️</span
+        >
+      </div>
+
+      <!-- 添加构建日志列表 -->
+      <div class="build-log">
+        <div class="log-list">
+          <div v-for="(log, index) in buildLogs" :key="index" class="log-item">
+            {{ log }}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
