@@ -1,6 +1,6 @@
 import * as crc32 from 'crc-32';
 import { existsSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'fs';
-import { emptyDirSync, mkdirSync, readFileSync, rmdirSync } from 'fs-extra';
+import { emptyDirSync, mkdirSync, pathExistsSync, readFileSync, rmdirSync } from 'fs-extra';
 import { isAbsolute, join, normalize } from 'path';
 import { GetAccessorDeclarationStructure, Project, Scope, StructureKind, SyntaxKind } from "ts-morph";
 import { App, createApp } from 'vue';
@@ -244,6 +244,12 @@ module.exports = Editor.Panel.define({
 
                         if (!this.modFile) this.modFile = "client";
 
+                        const p = this.xlsxPath.replace(Editor.Project.path, "db:/");
+                        if (!pathExistsSync(p)) {
+                            Editor.Dialog.info("xlsx文件目录不存在");
+                            return;
+                        }
+
                         if (this.xlsxPath && this.exportDirector && this.exportTSDirector && this.modFile) {
                             const options = new ParserOptions(
                                 this.xlsxPath,
@@ -384,6 +390,7 @@ module.exports = Editor.Panel.define({
                                             moduleSpecifier: "cc",
                                         },
                                     ]);
+
                                     const w = project.createWriter();
 
                                     w.write(`director.on("game-framework-initialize", () => {`);
@@ -406,7 +413,6 @@ module.exports = Editor.Panel.define({
                                                     const classDeclaration = sourceFile.getClass(name + "$Type")!;
                                                     // 计算 CRC32 值
                                                     const crcValue = crc32.str(name); // 使用类名计算 CRC32
-                                                    // 方法1：直接添加 implements 子句
                                                     classDeclaration.addImplements(`IGameFramework.ISerializer`);
                                                     const getterStructure: GetAccessorDeclarationStructure = {
                                                         name: "protoId",
