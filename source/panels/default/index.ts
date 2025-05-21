@@ -178,11 +178,7 @@ module.exports = Editor.Panel.define({
 
                         if (!this.modFile) this.modFile = "client";
 
-                        const p = this.xlsxPath.replace(Editor.Project.path, "db:/");
-                        if (!pathExistsSync(p)) {
-                            Editor.Dialog.info("xlsx文件目录不存在");
-                            return;
-                        }
+                        console.log("配置表目录：", this.xlsxPath);
 
                         if (this.xlsxPath && this.exportDirector && this.exportTSDirector && this.modFile) {
                             const options = new ParserOptions(
