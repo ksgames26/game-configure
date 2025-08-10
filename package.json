@@ -26,6 +26,9 @@
         "typescript": "^5.4.5",
         "xlsx": "^0.18.5"
     },
+    "gameDependencies":{
+        "game-protobuf": "v1.0.0"
+    },
     "panels": {
         "default": {
             "title": "i18n:game-configure.panel_title",
